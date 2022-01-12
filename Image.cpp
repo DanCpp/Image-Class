@@ -95,6 +95,57 @@ Image& Image::mask(float r, float g, float b)
 	return *this;
 }
 
+Image Image::rgb_to_bgr()
+{
+	if (channels < 3) {
+		throw new std::exception("Needs at least 3 channels");
+		return *this;
+	}
+	for (int i = 0; i < size; i += channels)
+	{
+		uint8_t r = data[i];
+		data[i] = data[i + 2];
+		data[i + 2] = r;
+	}
+	return *this;
+}
+
+Image& Image::encodemessage(std::string msg)
+{
+	uint32_t len = msg.size() * 8;
+	if (len + STEG_HDR_SIZE > size)
+	{
+		throw new std::exception("this message is to large");
+		return *this;
+	}
+	for (uint32_t i = 0; i < STEG_HDR_SIZE; ++i)
+	{
+		data[i] &= 0xFE;
+		data[i] |= (len >> (STEG_HDR_SIZE - 1 - i)) & 1UL;
+	}
+	for (uint32_t i = 0; i < len; ++i)
+	{
+		data[i + STEG_HDR_SIZE] &= 0xFE;
+		data[i + STEG_HDR_SIZE] |= (msg[i / 8] >> ((len - 1 - i) % 8)) & 1;
+	}
+	return *this;
+}
+
+Image& Image::decodemessage(char* buffer, size_t* msgLen)
+{
+	uint32_t len = 0;
+	for (uint32_t i = 0; i < STEG_HDR_SIZE; ++i)
+	{
+		len = (len << 1) | (data[i] & 1);
+	}
+	*msgLen = len / 8;
+	for (uint32_t i = 0; i < len; ++i)
+	{
+		buffer[i / 8] = (buffer[i / 8] << 1) | (data[i + STEG_HDR_SIZE] & 1);
+	}
+	return *this;
+}
+
 Image::Image(const Image& img) : Image(img.w, img.h, img.channels)
 {
 	memcpy(data, img.data, size);

@@ -1,5 +1,7 @@
 #pragma once
 #include <iostream>
+#define STEG_HDR_SIZE sizeof(uint32_t) * 8
+
 
 class Image
 {
@@ -31,5 +33,10 @@ public:
 	Image& avg_grayscale();
 	Image& lum_grayscale();
 	Image& mask(float r, float g, float b);
+	Image rgb_to_bgr();
+
+	Image& encodemessage(std::string msg);
+
+	Image& decodemessage(char* buffer, size_t* msgLen);
 };
 
