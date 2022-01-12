@@ -52,6 +52,49 @@ bool Image::write(std::string filename)
 	return success;
 }
 
+Image& Image::avg_grayscale()
+{
+	if (channels < 3) {
+		throw new std::exception("this picture has been already grayscale");
+		return *this;
+	}
+	for (int i = 0; i < size; i += channels) // (r + g + b) / 3
+	{
+		int gray = (data[i] + data[i + 1] + data[i + 2]) / 3;
+		memset(data + i, gray, 3);
+	}
+	return *this;
+}
+
+Image& Image::lum_grayscale()
+{
+	if (channels < 3) {
+		throw new std::exception("this picture has been already grayscale");
+		return *this;
+	}
+	for (int i = 0; i < size; i += channels) // (r + g + b) / 3
+	{
+		int gray = 0.2126 * data[i] + 0.7152 * data[i + 1] + 0.0722 * data[i + 2];
+		memset(data + i, gray, 3);
+	}
+	return *this;
+}
+
+Image& Image::mask(float r, float g, float b)
+{
+	if (channels < 3) {
+		throw new std::exception("This picture needs at least 3 channels");
+		return *this;
+	}
+	for (int i = 0; i < size; i += channels)
+	{
+		data[i] *= r;
+		data[i + 1] *= g;
+		data[i + 2] *= b;
+	}
+	return *this;
+}
+
 Image::Image(const Image& img) : Image(img.w, img.h, img.channels)
 {
 	memcpy(data, img.data, size);

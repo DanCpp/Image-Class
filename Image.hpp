@@ -28,5 +28,8 @@ public:
 	bool read(std::string filename);
 	bool write(std::string filename);
 
+	Image& avg_grayscale();
+	Image& lum_grayscale();
+	Image& mask(float r, float g, float b);
 };
 
