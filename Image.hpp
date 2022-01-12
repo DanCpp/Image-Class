@@ -38,5 +38,8 @@ public:
 	Image& encodemessage(std::string msg);
 
 	Image& decodemessage(char* buffer, size_t* msgLen);
+
+	Image& diffmap(Image& img);
+	Image& scale_diffmap(Image& img, uint8_t scl = 0);
 };
 

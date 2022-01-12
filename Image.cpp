@@ -1,6 +1,7 @@
 #include "Image.hpp"
 #define STB_IMAGE_IMPLEMENTATION
 #define STB_IMAGE_WRITE_IMPLEMENTATION
+#define BOUND_BYTE(value) value < 0 ? 0 : (value > 255 ? 255 : value)
 #include "stb_image/stb_image.h"
 #include "stb_image/stb_image_write.h"
 
@@ -143,6 +144,49 @@ Image& Image::decodemessage(char* buffer, size_t* msgLen)
 	{
 		buffer[i / 8] = (buffer[i / 8] << 1) | (data[i + STEG_HDR_SIZE] & 1);
 	}
+	return *this;
+}
+
+Image& Image::diffmap(Image& img)
+{
+	int compare_width = fmin(w, img.w);
+	int compare_height = fmin(h, img.h);
+	int compare_channels = fmin(channels, img.channels);
+	for (uint32_t i = 0; i < compare_height; ++i)
+	{
+		for (uint32_t j = 0; j < compare_width; ++j)
+		{
+			for (uint32_t k = 0; k < compare_channels; ++k)
+			{
+				data[(i * w + j) * channels + k] =
+					BOUND_BYTE(abs(data[(i * w + j) * channels + k] - img.data[(i * img.w + j) * img.channels + k]));
+			}
+		}
+	}
+	return *this;
+}
+
+Image& Image::scale_diffmap(Image& img, uint8_t scl)
+{
+	int compare_width = fmin(w, img.w);
+	int compare_height = fmin(h, img.h);
+	int compare_channels = fmin(channels, img.channels);
+	uint8_t largest = 0;
+	for (uint32_t i = 0; i < compare_height; ++i)
+	{
+		for (uint32_t j = 0; j < compare_width; ++j)
+		{
+			for (uint32_t k = 0; k < compare_channels; ++k)
+			{
+				data[(i * w + j) * channels + k] =
+					BOUND_BYTE(abs(data[(i * w + j) * channels + k] - img.data[(i * img.w + j) * img.channels + k]));
+				largest = fmax(largest, data[(i * w + j) * channels + k]);
+			}
+		}
+	}
+	scl = 255 / fmax(1, fmax(scl, largest));
+	for (int i = 0; i < size; ++i)
+		data[i] *= scl;
 	return *this;
 }
 
