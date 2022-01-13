@@ -41,5 +41,14 @@ public:
 
 	Image& diffmap(Image& img);
 	Image& scale_diffmap(Image& img, uint8_t scl = 0);
+
+	Image& convole_clampTo0(uint8_t channel, uint32_t ker_w, uint32_t ker_h, double ker[],
+		uint32_t cr, uint32_t cc);
+
+	Image& convole_clampToBorder(uint8_t channel, uint32_t ker_w, uint32_t ker_h, double ker[],
+		uint32_t cr, uint32_t cc);
+
+	Image& convole_cyclic(uint8_t channel, uint32_t ker_w, uint32_t ker_h, double ker[],
+		uint32_t cr, uint32_t cc);
 };
 

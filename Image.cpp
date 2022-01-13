@@ -190,6 +190,96 @@ Image& Image::scale_diffmap(Image& img, uint8_t scl)
 	return *this;
 }
 
+Image& Image::convole_clampTo0(uint8_t channel, uint32_t ker_w, uint32_t ker_h, double ker[], uint32_t cr, uint32_t cc)
+{
+	uint8_t* new_data = new uint8_t[w * h];
+	uint64_t center = cr * ker_w + cc;
+	for (uint64_t k = channels; k < size; k += channels)
+	{
+		double sum = 0;
+		for (long i = -((long)cr); i < (long)ker_h - cr; ++i)
+		{
+			long row = ((long)k / channels) / w - i;
+			if (row < 0 or row > h - 1)
+				continue;
+			for (long j = -((long)cc); j < (long)ker_w - cc; ++j)
+			{
+				long col = ((long)k / channels) % w - j;
+				if (col < 0 or col > w - 1)
+					continue;
+				sum += ker[center + i * (long)ker_w + j] * data[(row * w + col) * channels + channel];
+			}
+		}
+		new_data[k / channels] = (uint8_t)BOUND_BYTE(round(sum));
+	}
+	for (uint64_t k = channels; k < size; k += channels)
+	{
+		data[k] = new_data[k / channels];
+	}
+	delete[] new_data;
+	return *this;
+}
+
+Image& Image::convole_clampToBorder(uint8_t channel, uint32_t ker_w, uint32_t ker_h, double ker[], uint32_t cr, uint32_t cc)
+{
+	uint8_t* new_data = new uint8_t[w * h];
+	uint64_t center = cr * ker_w + cc;
+	for (uint64_t k = channels; k < size; k += channels)
+	{
+		double sum = 0;
+		for (long i = -((long)cr); i < (long)ker_h - cr; ++i)
+		{
+			long row = ((long)k / channels) / w - i;
+			if (row < 0) row = 0;
+			else if (row > h - 1) row = h - 1;
+			for (long j = -((long)cc); j < (long)ker_w - cc; ++j)
+			{
+				long col = ((long)k / channels) % w - j;
+				if (col < 0) col = 0;
+				else if (col > w - 1) col = w - 1;
+				sum += ker[center + i * (long)ker_w + j] * data[(row * w + col) * channels + channel];
+			}
+		}
+		new_data[k / channels] = (uint8_t)BOUND_BYTE(round(sum));
+	}
+	for (uint64_t k = channels; k < size; k += channels)
+	{
+		data[k] = new_data[k / channels];
+	}
+	delete[] new_data;
+	return *this;
+}
+
+Image& Image::convole_cyclic(uint8_t channel, uint32_t ker_w, uint32_t ker_h, double ker[], uint32_t cr, uint32_t cc)
+{
+	uint8_t* new_data = new uint8_t[w * h];
+	uint64_t center = cr * ker_w + cc;
+	for (uint64_t k = channels; k < size; k += channels)
+	{
+		double sum = 0;
+		for (long i = -((long)cr); i < (long)ker_h - cr; ++i)
+		{
+			long row = ((long)k / channels) / w - i;
+			if (row < 0) row = (row % h) + h;
+			else if (row > h - 1) row %= h;
+			for (long j = -((long)cc); j < (long)ker_w - cc; ++j)
+			{
+				long col = ((long)k / channels) % w - j;
+				if (col < 0) col = (col % w) + w;
+				else if (col > w - 1) col %= w;
+				sum += ker[center + i * (long)ker_w + j] * data[(row * w + col) * channels + channel];
+			}
+		}
+		new_data[k / channels] = (uint8_t)BOUND_BYTE(round(sum));
+	}
+	for (uint64_t k = channels; k < size; k += channels)
+	{
+		data[k] = new_data[k / channels];
+	}
+	delete[] new_data;
+	return *this;
+}
+
 Image::Image(const Image& img) : Image(img.w, img.h, img.channels)
 {
 	memcpy(data, img.data, size);
